@@ -19,7 +19,6 @@ package com.android.phone;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.bluetooth.IBluetoothHeadsetPhone;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -228,7 +227,7 @@ public class PhoneUtils {
         final Phone phone = ringingCall.getPhone();
         final boolean phoneIsCdma = (phone.getPhoneType() == PhoneConstants.PHONE_TYPE_CDMA);
         boolean answered = false;
-        IBluetoothHeadsetPhone btPhone = null;
+        BluetoothHandsfree bluetoothHandsfree = null;
 
         if (phoneIsCdma) {
             // Stop any signalInfo tone being played when a Call waiting gets answered
@@ -257,16 +256,12 @@ public class PhoneUtils {
                         // drops off
                         app.cdmaPhoneCallState.setAddCallMenuStateAfterCallWaiting(true);
 
-                        // If a BluetoothPhoneService is valid we need to set the second call state
+                        // If a BluetoothHandsfree is valid we need to set the second call state
                         // so that the Bluetooth client can update the Call state correctly when
                         // a call waiting is answered from the Phone.
-                        btPhone = app.getBluetoothPhoneService();
-                        if (btPhone != null) {
-                            try {
-                                btPhone.cdmaSetSecondCallState(true);
-                            } catch (RemoteException e) {
-                                Log.e(LOG_TAG, Log.getStackTraceString(new Throwable()));
-                            }
+                        bluetoothHandsfree = app.getBluetoothHandsfree();
+                        if (bluetoothHandsfree != null) {
+                            bluetoothHandsfree.cdmaSetSecondCallState(true);
                         }
                   }
                 }
@@ -303,15 +298,11 @@ public class PhoneUtils {
                 Log.w(LOG_TAG, "answerCall: caught " + ex, ex);
 
                 if (phoneIsCdma) {
-                    // restore the cdmaPhoneCallState and btPhone.cdmaSetSecondCallState:
+                    // restore the cdmaPhoneCallState and bthf.cdmaSetSecondCallState:
                     app.cdmaPhoneCallState.setCurrentCallState(
                             app.cdmaPhoneCallState.getPreviousCallState());
-                    if (btPhone != null) {
-                        try {
-                            btPhone.cdmaSetSecondCallState(false);
-                        } catch (RemoteException e) {
-                            Log.e(LOG_TAG, Log.getStackTraceString(new Throwable()));
-                        }
+                    if (bluetoothHandsfree != null) {
+                        bluetoothHandsfree.cdmaSetSecondCallState(false);
                     }
                 }
             }
